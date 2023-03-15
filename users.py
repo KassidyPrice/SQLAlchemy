@@ -18,7 +18,7 @@ class Users(db.Model):
 
     organization = db.relationship('Organizations', back_populates ='users')
 
-    def __init__(self, first_name, last_name, email, phone, city, state, org_id, active=True):
+    def __init__(self, first_name='', last_name='', email='', phone='', city='', state='', org_id=uuid.uuid4, active=True):
 
         self.first_name = first_name
         self.last_name = last_name

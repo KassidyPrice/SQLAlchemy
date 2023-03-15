@@ -16,6 +16,13 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 init_db(app, db)
 
+def populate_object(obj, data_dictionary):
+    fields = data_dictionary.keys()
+    
+    for field in fields:
+        if hasattr(obj, field):
+            setattr(obj, field, data_dictionary[field])
+
 def create_all():
     with app.app_context():
         db.create_all()
@@ -41,14 +48,10 @@ def add_organization():
     phone = data.get('phone')
     if len(phone) > 20:
         return "Phone number cannot be longer than 20 characters", 400
-    city = data.get('city')
-    state = data.get('state')
-    active = True
-    if 'active' in data:
-        active = (data.get('active') != 'false')
-    type = data.get('type')
 
-    new_org_record = Organizations(name, phone, city, state, type, active)
+
+    new_org_record = Organizations()
+    populate_object(new_org_record, data)
     db.session.add(new_org_record)
     db.session.commit()
 
@@ -81,8 +84,6 @@ def update_org(org_id):
     if not is_valid_uuid(org_id):
         return jsonify(f"Invalid org_id: {org_id}"), 404
 
-    # feilds = ['org_id','name', 'phone', 'city', 'state', 'active', 'type']
-
     org_record = db.session.query(Organizations).filter(Organizations.org_id == org_id).first()
     
     if not org_record:
@@ -90,18 +91,7 @@ def update_org(org_id):
 
     request_params = request.json
     
-    if 'name' in request_params:
-        org_record.name = request_params['name']
-    if 'phone' in request_params:
-        org_record.phone = request_params['phone']
-    if 'city' in request_params:
-        org_record.city = request_params['city']
-    if'state' in request_params:
-        org_record.state = request_params['state']
-    if 'active' in request_params:
-        org_record.active = request_params.get('active')
-    if 'type' in request_params:
-        org_record.type = request_params['type']
+    populate_object(org_record, request_params)
 
     db.session.commit()
 
@@ -144,19 +134,15 @@ def activate_org_by_id(org_id, set_active = True):
 def add_user():
     data = request.json
  
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
     email = data.get('email')
     if not email:
         return "Email must be a non-empty string", 400
     phone = data.get('phone')
     if len(phone) > 20:
         return "Phone number cannot be longer than 20 characters", 400
-    city = data.get('city')
-    state = data.get('state')
-    org_id = data.get('org_id')
 
-    new_user_record = Users(first_name, last_name, email, phone, city, state, org_id)
+    new_user_record = Users()
+    populate_object(new_user_record, data)
     db.session.add(new_user_record)
     db.session.commit()
 
@@ -190,29 +176,12 @@ def update_user(user_id):
 
     request_params = request.json
 
-    # feilds = ['user_id','first_name', 'last_name', 'email', 'phone', 'city', 'state','org_id','active']
-
     user_record = db.session.query(Users).filter(Users.user_id == user_id).first()
 
     if not user_record:
         return jsonify(f"User {user_id} not found!"), 404
         
-    if 'first_name' in request_params:
-        user_record.first_name = request_params['first_name']
-    if 'last_name' in request_params:
-        user_record.last_name = request_params['last_name']
-    if 'email' in request_params:
-        user_record.email = request_params['email']
-    if 'phone' in request_params:
-        user_record.phone = request_params['phone']
-    if 'city' in request_params:
-        user_record.city = request_params['city']
-    if 'state' in request_params:
-        user_record.state = request_params['state']   
-    if 'org_id' in request_params: 
-        user_record.org_id = request_params['org_id']
-    if 'active' in request_params:
-        user_record.active = request_params.get('active')
+    populate_object(user_record, request_params)
     
     db.session.commit()
 
